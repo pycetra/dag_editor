@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DAG Editor</title>
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@pycetra" />
+    <meta name="twitter:title" content="markdown editor" />
+    <meta name="twitter:description" content=".md を貼り付けてスタート！" />
+    <meta
+      name="twitter:image"
+      content="https://pycetra.github.io/dag_editor/screen.png"
+    />
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="/dag_editor/favicon.ico"
+    />
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-9Y0HB12ZTV"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-9Y0HB12ZTV");
+    </script>
+  </head>
+  <body>
+    <p id="fname">file name: <span id="fnameSpan"></span><br /></p>
+    <div id="droparea"><p>drop file</p></div>
+    <div id="droptextarea">...</div>
+    <div id="iframe_div">
+      <iframe
+        id="pycetra_iframe"
+        src="https://pycetra.com/raw/index.html"
+        scrolling="no"
+      ></iframe>
+    </div>
+    <div class="texteditor_">
+      <div class="texteditor_dummy"></div>
+
+      <button id="reset_button" type="button"><span>reset</span></button>
+      <textarea id="texteditor" class="texteditor_area" rows="5" cols="100">
+- #region01@r1
+- sample01
+- sample02
+- sample03
+  - sample03_1
+  - sample03_2
+
+- #region01@r2
+- sample01
+- sample02
+- sample03
+
+- #position
+- r1,200,100
+- r2,400,100
+</textarea
+      >
+      <div class="box">
+        <button id="save_button" type="button">save</button>
+        <button id="load_button" type="button">load</button>
+        <button id="download_button" type="button">download(.md)</button>
+        <button id="download_button2" type="button">download(.svg)</button>
+      </div>
+    </div>
+    <script>
+      function flexTextarea(el) {
+        const dummy = el.querySelector(".texteditor_dummy");
+        el.querySelector(".texteditor_area").addEventListener("input", (e) => {
+          dummy.textContent = e.target.value + "\u200b";
+        });
+      }
+      document.querySelectorAll(".texteditor_").forEach(flexTextarea);
+    </script>
+
+    <script
+      defer
+      id="pyodideJs"
+      src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"
+    ></script>
+  </body>
+</html>
+<style>
+  body {
+    min-height: 100vh;
+  }
+  body.scroll_ng {
+    overflow: hidden;
+  }
+  #droparea {
+    width: auto;
+    height: 120px;
+    padding: 0;
+    border: 2px dashed #bbb;
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    text-align: center;
+    font: 25pt bold arial;
+    color: #bbb;
+  }
+  #droparea.effect {
+    border: 3px solid gray;
+  }
+  #droparea.aftereffect {
+    border: 2px dashed #bbb;
+    height: 30px;
+    font: 10pt arial;
+    color: white;
+  }
+
+  #fname {
+    margin-block-start: 0px;
+    margin-block-end: 0px;
+  }
+  #droptextarea {
+    display: none;
+    width: auto;
+    height: 100px;
+    overflow: auto;
+    border: 2px solid gray;
+    background: white;
+    color: black;
+    white-space: pre;
+    padding: 0em;
+  }
+  #reset_button {
+    position: relative;
+    margin-left: 400px;
+    width: 200px;
+    height: 30px;
+    background-color: rgb(200, 200, 200);
+    font-size: 20px;
+  }
+  #iframe_div {
+    min-width: 800px;
+    width: auto;
+    padding-left: 630px;
+    padding-right: 630px;
+  }
+  #pycetra_iframe {
+    border-color: black;
+    position: relative;
+  }
+  .z_top {
+    z-index: 10;
+  }
+  #save_button {
+    width: 200px;
+    height: 30px;
+    position: absolute;
+    background-color: rgb(200, 200, 200);
+    font-size: 20px;
+  }
+  #load_button {
+    width: 200px;
+    height: 30px;
+    margin-right: 0;
+    margin-left: auto;
+    display: block;
+    background-color: rgb(200, 200, 200);
+    font-size: 20px;
+  }
+  #download_button {
+    width: 200px;
+    height: 30px;
+    display: block;
+    background-color: rgb(200, 200, 200);
+    font-size: 20px;
+  }
+  #download_button2 {
+    width: 200px;
+    height: 30px;
+    display: block;
+    background-color: rgb(200, 200, 200);
+    font-size: 20px;
+  }
+
+  .texteditor_ {
+    position: fixed;
+    width: 600px;
+    top: 100px;
+    left: 10px;
+    height: 80%;
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
+  .texteditor_dummy {
+    display: none;
+    overflow: hidden;
+    visibility: hidden;
+    box-sizing: border-box;
+    padding: 5px 15px;
+    min-height: 120px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    border: 1px solid;
+  }
+
+  .texteditor_area {
+    position: relative;
+    box-sizing: border-box;
+    padding: 5px 15px;
+    width: 600px;
+    height: 90%;
+    background-color: rgb(250, 250, 250, 80%);
+    border: 1px solid #b6c3c6;
+    border-radius: 4px;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    resize: none;
+  }
+</style>
+<script>
+  const DragAndDropEvent = {
+    dragover: (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+      droparea.classList.add("effect");
+    },
+    dragleave: (e) => {
+      droparea.classList.remove("effect");
+    },
+    drop: (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length > 1) {
+        tarea.textContent = "single file only";
+        return;
+      }
+      readTextFile(e.dataTransfer.files[0]);
+      droparea.classList.add("aftereffect");
+    },
+  };
+  function pyodideText2Graph(text) {
+    window.pyodide.runPython(
+      `
+import json
+import pandas as pd
+from pycetramd import md2graph
+text = """
+` +
+        text +
+        `
+"""
+
+link_f,node_f = md2graph.main(text)
+graphdata_obj = {"node_feature": pd.DataFrame(node_f).to_dict("list"),
+					"link_feature":pd.DataFrame(link_f).to_dict("list")}
+graphdata_str = json.dumps(graphdata_obj)`
+    );
+    return window.pyodide.globals.get("graphdata_str");
+  }
+  function readTextFile(file) {
+    fnameSpan.textContent = `${file.name}`;
+    tarea.textContent = "";
+    let encode = null;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      tarea.textContent = await e.target.result;
+      const graph_str = pyodideText2Graph(e.target.result);
+      parent2child(graph_str);
+    };
+    reader.readAsText(file);
+  }
+
+  function parent2child(text) {
+    iframe.contentWindow.postMessage(
+      {
+        message: text,
+      },
+      "*"
+    );
+  }
+
+  function downloadSvg() {
+    iframe.contentWindow.postMessage(
+      {
+        download: true,
+        filename: "img.svg",
+      },
+      "*"
+    );
+  }
+
+  const droparea = document.getElementById("droparea");
+  const tarea = document.getElementById("droptextarea");
+  const texteditor = document.getElementById("texteditor");
+  let graphstr_dummpy = "";
+  const fnameSpan = document.getElementById("fnameSpan");
+  const resetbutton = document.getElementById("reset_button");
+  const savebutton = document.getElementById("save_button");
+  const loadbutton = document.getElementById("load_button");
+  const downloadbutton = document.getElementById("download_button");
+  const downloadbutton2 = document.getElementById("download_button2");
+
+  droparea.addEventListener("dragover", DragAndDropEvent["dragover"]);
+  droparea.addEventListener("dragleave", DragAndDropEvent["dragleave"]);
+  droparea.addEventListener("drop", DragAndDropEvent["drop"]);
+  resetbutton.addEventListener("click", droptextarea2iframe);
+  savebutton.addEventListener("click", iframe2textarea);
+  loadbutton.addEventListener("click", textarea2iframe);
+  downloadbutton.addEventListener("click", downloadTextFile);
+  downloadbutton2.addEventListener("click", downloadSvg);
+  function downloadTextFile() {
+    let fileName =
+      fnameSpan.textContent === "" ? "sample.md" : fnameSpan.textContent;
+    let text = texteditor.value;
+    downloadText(fileName, text);
+  }
+
+  function droptextarea2iframe() {
+    const graph_str = pyodideText2Graph(tarea.textContent);
+    parent2child(graph_str);
+  }
+
+  function iframe2textarea() {
+    window.pyodide.runPython(
+      `
+import json
+import pandas as pd
+from pycetramd import graph2md
+graphdata_obj = json.loads("""` +
+        graphstr_dummpy +
+        `""")
+node_f = pd.DataFrame(graphdata_obj['node_feature'])
+node_f = node_f.to_records(index=False)
+link_f = pd.DataFrame(graphdata_obj['link_feature'])
+link_f = link_f.to_records(index=False)
+graphdata_str_gui = graph2md.main(link_f,node_f)`
+    );
+
+    const texteditor = document.getElementById("texteditor");
+    texteditor.value = window.pyodide.globals.get("graphdata_str_gui");
+    document.querySelectorAll(".texteditor_").forEach(flexTextarea);
+  }
+  function textarea2iframe() {
+    const graph_str = pyodideText2Graph(texteditor.value);
+    parent2child(graph_str);
+  }
+
+  let iframe_div = document.getElementById("iframe_div");
+  let iframe = document.getElementById("pycetra_iframe");
+  iframe.width = "100%";
+  iframe.height = "600px";
+  function child2parent(e) {
+    if (
+      typeof e.data.message !== "undefined" &&
+      "node_feature" in JSON.parse(e.data.message)
+    ) {
+      //console.log("child2parent");
+      //console.log(e.data.message);
+      //console.log(e.data.height);
+      //console.log(e.data.width);
+      iframe.width = e.data.width;
+      iframe.height = e.data.height;
+      iframe_div.style.width = Number(e.data.width) + 500 + "px";
+      graphstr_dummpy = e.data.message;
+    }
+  }
+
+  function downloadText(fileName, text) {
+    const blob = new Blob([text], { type: "text/plain" });
+    const aTag = document.createElement("a");
+    aTag.href = URL.createObjectURL(blob);
+    aTag.target = "_blank";
+    aTag.download = fileName;
+    aTag.click();
+    URL.revokeObjectURL(aTag.href);
+  }
+
+  if (window.addEventListener) {
+    addEventListener("message", child2parent, false);
+  }
+  texteditor.addEventListener("mouseover", () => {
+    document.querySelector("body").classList.add("scroll_ng");
+  });
+  texteditor.addEventListener("mouseout", () => {
+    document.querySelector("body").classList.remove("scroll_ng");
+  });
+
+  document.addEventListener("keydown", cancelSaveHtml);
+  texteditor.addEventListener("keydown", input_tab);
+  texteditor.addEventListener("keydown", loadText);
+  texteditor.addEventListener("focus", textareaZIndexTop);
+  texteditor.addEventListener("blur", iframeZIndexTop);
+
+  function input_tab(event) {
+    if (event.key === "Tab") {
+      event.preventDefault();
+      var TAB = "  ";
+      var value = this.value;
+      var sPos = this.selectionStart;
+      var ePos = this.selectionEnd;
+      var result = value.slice(0, sPos) + TAB + value.slice(ePos);
+      var cPos = sPos + TAB.length;
+      this.value = result;
+      this.setSelectionRange(cPos, cPos);
+    }
+  }
+
+  function textareaZIndexTop() {
+    texteditor.classList.add("z_top");
+    iframe.classList.remove("z_top");
+  }
+  function iframeZIndexTop() {
+    iframe.classList.add("z_top");
+    texteditor.classList.remove("z_top");
+  }
+  function loadText(e) {
+    textareaZIndexTop();
+    if (e.key === "s" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      iframeZIndexTop();
+      if (typeof window.pyodide !== "undefined") {
+        textarea2iframe();
+      }
+    }
+  }
+  function cancelSaveHtml(e) {
+    if (e.key === "s" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+    }
+  }
+
+  document.getElementById("pyodideJs").onload = async (e) => {
+    window.pyodide = await loadPyodide({
+      indexURL: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/",
+    });
+
+    await window.pyodide.loadPackage("pandas");
+    await window.pyodide.loadPackage("networkx");
+    await window.pyodide.loadPackage("./pycetramd-0.0.1-py3-none-any.whl");
+    await window.pyodide.runPython(`
+    	import json
+    	import pandas as pd
+    	from pycetramd import graph2md, md2graph
+    	print("pyodide: loading completed.")
+    	`);
+  };
+</script>
